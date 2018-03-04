@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const MessagesSchema = new mongoose.Schema({
+const ConversationSchema = new mongoose.Schema({
     users: [
         {
             sender: { type: mongoose.Schema.Types.ObjectId },
@@ -9,14 +9,10 @@ const MessagesSchema = new mongoose.Schema({
         }
     ],
     messages: [
-        {
-            messages: { type: String },
-            seen: { type: Boolean, default: false }
-        }
+        { type: String }
     ]
 }, {
         timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
     });
 
-mongoose.model('Messages', MessagesSchema);
-
+mongoose.model('Conversatons', ConversationSchema);

@@ -4,9 +4,9 @@ const Router = express.Router();
 const userController = require('../controller/userController');
 const isAuthen = userController.isAuthen;
 
-let app = express();
+const cookieParser = require('cookie-parser');
 
-const init = (io) => {
+const init = (io, app, session) => {
 
     Router.get('/', (req, res) => {
         res.redirect('/login');
@@ -16,6 +16,7 @@ const init = (io) => {
         res.render('login');
     });
     var userid = "";
+    var currentUsername = "";
     Router.post('/api/login', (req, res) => {
         userController.authen(req.body.username, req.body.password, (err, data) => {
             if (err) console.error(err);
@@ -23,6 +24,7 @@ const init = (io) => {
                 if (data.isMatch) {
                     req.session.regenerate(() => {
                         userid = data.user._id;
+                        currentUsername = data.user.username;
                         req.session.user = data;
                         res.send(data.user._id);
                     });
@@ -95,19 +97,51 @@ const init = (io) => {
             res.json(data);
         });
     });
-    io.on('connection', (socket) => {
 
+    var searchUserId;
+    Router.get('/api/chat/:id', (req, res) => {
+        searchUserId = req.params.id;
+        res.render('index', {
+            userId: req.params.id
+        });
+    });
+
+    Router.post('/api/chat/:id', (req, res) => {
+
+    });
+
+    var clients = {};
+    var users = {};
+    io.use(session);
+    io.on('connection', (socket) => {
         socket.on('url', (data) => {
-            if (data == '/api/chat') {
-                if(typeof userid !== 'undefined'){
-                    socket.id = userid;
+            if (data) {
+                if (typeof userid !== 'undefined') {
+                    clients[userid] = socket.id;
                 }
                 console.log(`api/chat: ${socket.id}`);
 
             }
         });
+        socket.on('send message', (data) => {
+            console.log(clients);
+            if (typeof currentUsername !== 'undefined' &&
+                typeof searchUserId !== 'undefined') {
+                io.sockets.connected[clients[searchUserId]].emit('private chat', {
+                    user: currentUsername,
+                    message: data.message
+                });
+                io.sockets.connected[socket.id].emit('private chat', {
+                    user: currentUsername,
+                    message: data.message
+                });
 
+            }
+        });
 
+        socket.on('typing', (typing) => {
+            socket.broadcast.emit('typing', typing);
+        });
     });
 
     return Router;
