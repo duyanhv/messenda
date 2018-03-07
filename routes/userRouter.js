@@ -15,8 +15,12 @@ const init = (io, app, sessionStore) => {
     Router.get('/login', (req, res) => {
         res.render('login');
     });
+
+    Router.get('/checkSession', (req, res) => res.send(req.session.user.user._id));
+
     var userid = "";
     var currentUsername = "";
+
     Router.post('/api/login', (req, res) => {
         userController.authen(req.body.username, req.body.password, (err, data) => {
             if (err) console.error(err);
@@ -97,10 +101,12 @@ const init = (io, app, sessionStore) => {
             res.json(data);
         });
     });
-
-    var searchUserId;
+    var users = {};
+    
     Router.get('/api/chat/:id', (req, res) => {
+        var searchUserId ='';
         searchUserId = req.params.id;
+        users[req.session.user.user._id] = searchUserId;
         res.render('index', {
             userId: req.params.id
         });
@@ -111,55 +117,57 @@ const init = (io, app, sessionStore) => {
     });
 
     var clients = {};
-    var users = {};
-    io.use(function(socket, next) {
+
+    io.use(function (socket, next) {
         if (socket.request.headers.cookie) {
             socket.request.cookie = cookie.parse(cookieParser.signedCookie(socket.request.headers.cookie, 'secret'));
-    
-            console.log('cookie header ( %s )', JSON.stringify(socket.request.headers.cookie));
+
+            // console.log('cookie header ( %s )', JSON.stringify(socket.request.headers.cookie));
             var cookies = cookie.parse(socket.request.headers.cookie);
-            console.log('cookies parsed ( %s )', JSON.stringify(cookies));
-            if (! cookies['cookiename']) {
+            // console.log('cookies parsed ( %s )', JSON.stringify(cookies));
+            if (!cookies['cookiename']) {
                 return next(new Error('Missing cookie ' + 'cookiename'));
             }
             var sid = cookieParser.signedCookie(cookies['cookiename'], 'duyanhv');
-            if (! sid) {
+            if (!sid) {
                 return next(new Error('Cookie signature is not valid'));
             }
-            console.log('session ID ( %s )', sid);
+            // console.log('session ID ( %s )', sid);
             socket.request.sid = sid;
-            sessionStore.get(sid, function(err, session) {
+            sessionStore.get(sid, function (err, session) {
                 if (err) return next(err);
-                if (! session) return next(new Error('session not found'));
+                if (!session) return next(new Error('session not found'));
                 socket.request.session = session;
                 next();
-    });
+            });
         }
-    
-        next();
+        else next();
     });
+
     io.on('connection', (socket) => {
+        // console.log('session user:');
+        //lay du lieu user tu session
+        // console.log(socket.request.session);
+
         socket.on('url', (data) => {
             if (data) {
-                if (typeof userid !== 'undefined') {
-                    clients[userid] = socket.id;
+                if (typeof socket.request.session.user.user._id !== 'undefined') {
+                    clients[socket.request.session.user.user._id] = socket.id;
                 }
-                console.log(`api/chat: ${socket.id}`);
 
+                console.log(`api/chat: ${socket.id}`);
             }
         });
         socket.on('send message', (data) => {
-            console.log('session user:');
-            //lay du lieu user tu session
-            console.log(socket.request.session);
-            if (typeof currentUsername !== 'undefined' &&
-                typeof searchUserId !== 'undefined') {
-                io.sockets.connected[clients[searchUserId]].emit('private chat', {
-                    user: currentUsername,
+
+            if (typeof socket.request.session !== 'undefined' &&
+                typeof users !== 'undefined') {
+                io.sockets.connected[clients[users[socket.request.session.user.user._id]]].emit('private chat', {
+                    user: socket.request.session.user.user.username,
                     message: data.message
                 });
                 io.sockets.connected[socket.id].emit('private chat', {
-                    user: currentUsername,
+                    user: socket.request.session.user.user.username,
                     message: data.message
                 });
 

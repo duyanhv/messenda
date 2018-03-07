@@ -17,12 +17,12 @@ app.set("view engine", "handlebars");
 let http = require('http').Server(app);
 var sessionStore = new expressSession.MemoryStore();
 const session = expressSession({
-    name : 'cookiename',
+    name: 'cookiename',
     store: sessionStore,
     secret: 'duyanhv',
     resave: true,
     saveUninitialized: false,
-    cookie: { maxAge: 60000 }
+    cookie: { maxAge: null }
 });
 
 app.use(session);

@@ -1,4 +1,3 @@
-
 var socket = io();
 
 
@@ -18,7 +17,7 @@ $('#message').on('keypress', (e) => {
 
         // let room = 'chatRoom1';
         // socket.emit('subcribe', room);
-        
+
         socket.emit('send message', {
             message: message
         });
@@ -41,6 +40,11 @@ socket.on('typing', (data) => {
         feedback.innerHTML = '';
     }
 });
+
+$('#buttonCheckSession').on('click', (e) => {
+    $.get('/checkSession').then(data => console.log(data));
+});
+
 
 var currentUserId;
 
@@ -94,14 +98,7 @@ $('#search_div').on('click', (e) => {
 
 let checkChatApi = (url) => {
     var testUrl = '/api/chat';
-    let bool;
-    if (url.indexOf(testUrl) >= 0) {
-        bool = true;
-        socket.emit('url', bool);
-    } else {
-        bool = false;
-        socket.emit('url', bool);
-    }
+    socket.emit('url', url.indexOf(testUrl) >= 0);
 }
 
 $(document).ready(() => {
