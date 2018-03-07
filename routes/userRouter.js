@@ -1,12 +1,12 @@
 const express = require('express');
 const Router = express.Router();
+const cookie = require('cookie');
+const cookieParser = require('cookie-parser');
 
 const userController = require('../controller/userController');
 const isAuthen = userController.isAuthen;
 
-const cookieParser = require('cookie-parser');
-
-const init = (io, app, session) => {
+const init = (io, app, sessionStore) => {
 
     Router.get('/', (req, res) => {
         res.redirect('/login');
@@ -112,7 +112,32 @@ const init = (io, app, session) => {
 
     var clients = {};
     var users = {};
-    io.use(session);
+    io.use(function(socket, next) {
+        if (socket.request.headers.cookie) {
+            socket.request.cookie = cookie.parse(cookieParser.signedCookie(socket.request.headers.cookie, 'secret'));
+    
+            console.log('cookie header ( %s )', JSON.stringify(socket.request.headers.cookie));
+            var cookies = cookie.parse(socket.request.headers.cookie);
+            console.log('cookies parsed ( %s )', JSON.stringify(cookies));
+            if (! cookies['cookiename']) {
+                return next(new Error('Missing cookie ' + 'cookiename'));
+            }
+            var sid = cookieParser.signedCookie(cookies['cookiename'], 'duyanhv');
+            if (! sid) {
+                return next(new Error('Cookie signature is not valid'));
+            }
+            console.log('session ID ( %s )', sid);
+            socket.request.sid = sid;
+            sessionStore.get(sid, function(err, session) {
+                if (err) return next(err);
+                if (! session) return next(new Error('session not found'));
+                socket.request.session = session;
+                next();
+    });
+        }
+    
+        next();
+    });
     io.on('connection', (socket) => {
         socket.on('url', (data) => {
             if (data) {
@@ -124,7 +149,9 @@ const init = (io, app, session) => {
             }
         });
         socket.on('send message', (data) => {
-            console.log(clients);
+            console.log('session user:');
+            //lay du lieu user tu session
+            console.log(socket.request.session);
             if (typeof currentUsername !== 'undefined' &&
                 typeof searchUserId !== 'undefined') {
                 io.sockets.connected[clients[searchUserId]].emit('private chat', {

@@ -43,24 +43,7 @@ socket.on('typing', (data) => {
 });
 
 var currentUserId;
-$('#btnLogin').on('click', (e) => {
-    e.preventDefault();
 
-    let username = $('input[name = username]').val();
-    let password = $('input[name = pass]').val();
-
-    $.ajax({
-        url: '/api/login',
-        method: 'POST',
-        data: {
-            username: username,
-            password: password
-        }
-    }).done((result) => {
-        currentUserId = result._id;
-        window.location.replace(`/api/chat`);
-    });
-});
 
 var searchUserId;
 
