@@ -148,6 +148,9 @@ const init = (io, app, sessionStore) => {
         // console.log('session user:');
         //lay du lieu user tu session
         // console.log(socket.request.session);
+        if(typeof socket.request.session.user.user.username !== 'undefined'){
+            socket.emit('username', socket.request.session.user.user.username);
+        }
 
         socket.on('url', (data) => {
             if (data) {
@@ -155,7 +158,7 @@ const init = (io, app, sessionStore) => {
                     clients[socket.request.session.user.user._id] = socket.id;
                 }
 
-                console.log(`api/chat: ${socket.id}`);
+                // console.log(`api/chat: ${socket.id}`);
             }
         });
         socket.on('send message', (data) => {
@@ -177,7 +180,12 @@ const init = (io, app, sessionStore) => {
         socket.on('typing', (typing) => {
             socket.broadcast.emit('typing', typing);
         });
+
+        socket.on('disconnect', ()=>{
+            delete clients[socket.request.session.user.user._id];
+        });
     });
+
 
     return Router;
 }

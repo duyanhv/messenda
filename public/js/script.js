@@ -21,11 +21,19 @@ $('#message').on('keypress', (e) => {
         socket.emit('send message', {
             message: message
         });
-        // message = "";
-
+        $("#message").val('');
     }
+    else if ($("#message").val() !== "") {
+        socket.emit('typing', username);
+    }
+    else {
+        socket.emit('stoptyping', username);
+    }
+});
 
-    socket.emit('typing', user);
+var username = "";
+socket.on('username', (data) => {
+    username = data;
 });
 
 socket.on('private chat', (msg) => {

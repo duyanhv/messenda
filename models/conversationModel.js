@@ -9,7 +9,10 @@ const ConversationSchema = new mongoose.Schema({
         }
     ],
     messages: [
-        { type: String }
+        {
+            type: String ,
+            seen: { type: Boolean, default: false }
+        }
     ]
 }, {
         timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

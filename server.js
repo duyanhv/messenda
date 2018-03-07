@@ -33,6 +33,9 @@ app.use('/', userRouter);
 
 app.use(express.static('public'));
 
+app.get('/*', (req, res) =>{
+    res.render('404notfound');
+});
 mongoose.connect(config.connectionString, (err) => {
     if (err) {
         console.log(err);
