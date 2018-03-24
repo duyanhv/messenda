@@ -1,12 +1,25 @@
 var socket = io();
 
+socket.on('connect', function () {
+    console.log('check 1', socket.connected);
+});
 
 $('#message').on('keypress', (e) => {
     if (e.keyCode == 13) {
-        var user = $("#user").val();
+
         var message = $("#message").val();
         var output = $('#output').val();
         var feedback = $('#feedback').val();
+
+        var urlSpit = "http://localhost:8080/api/chat/";
+        var url = window.location.href;
+        var receiver_id = url.split(urlSpit)[1];
+        // console.log(receiver_id);
+        socket.emit('send message', {
+            message: message,
+            receiver_id: receiver_id
+        });
+        $("#message").val('');
 
         // socket.emit('chat', {
         //     user: user,
@@ -18,16 +31,13 @@ $('#message').on('keypress', (e) => {
         // let room = 'chatRoom1';
         // socket.emit('subcribe', room);
 
-        socket.emit('send message', {
-            message: message
-        });
-        $("#message").val('');
+
     }
     else if ($("#message").val() !== "") {
         socket.emit('typing', username);
     }
-    else {
-        socket.emit('stoptyping', username);
+    else if (!$("#message").val()) {
+        socket.emit('stoptyping', '');
     }
 });
 
@@ -39,6 +49,14 @@ socket.on('username', (data) => {
 socket.on('private chat', (msg) => {
     feedback.innerHTML = '';
     output.innerHTML += '<p><strong>' + msg.user + ': </strong>' + msg.message + '</p>';
+    console.log(`msg.user: ${msg.user} || msg.mess: ${msg.message}`);
+
+    socket.emit('saveMess', {
+        username: msg.user,
+        message: msg.message,
+        receiver: msg.receiver,
+        userid: msg.userid
+    });
 });
 
 socket.on('typing', (data) => {
@@ -46,6 +64,27 @@ socket.on('typing', (data) => {
         feedback.innerHTML = '<p><em>' + data + ' is typing a message...</em></p>';
     } else {
         feedback.innerHTML = '';
+    }
+});
+
+socket.on('stoptyping', (data) => {
+    if (data) {
+        feedback.innerHTML = '';
+    }
+});
+
+var userOnline = [];
+socket.on('usersOnline', (data) =>{
+    if(data){
+        $(() =>{
+            var source = $('#usersonline-template').html();
+            var template = Handlebars.compile(source);
+            var html = template({
+                apiUsersOnline: Object.keys(data)
+            });
+            console.log(Object.keys(data));
+            $('#userOnline').html(html);
+        });
     }
 });
 
@@ -117,4 +156,5 @@ $(document).ready(() => {
     //     console.log(currentUserId, searchUserId);
     //     checkChatApi(currentUserId, searchUserId);
     // }
+
 });
