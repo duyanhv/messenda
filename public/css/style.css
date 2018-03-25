@@ -48,11 +48,10 @@ div.user_div:empty:before {
 
 div.search_div{
     width: 200px;
-    height: 60px;
+    /* height: 60px; */
     border:1px solid black;
     display: none;
     text-align: center;
-    cursor: pointer;
 }
 
 div.receiver_div{
@@ -68,13 +67,51 @@ div.usersOnline{
     border: 1px solid black;
     position: fixed;
     margin-top: 0;
+    overflow: hidden
 }
 div.userOnline{
-    position: relative;
+    /* position: relative; */
     /* border: 1px solid black; */
-    width: 58%;
+    /* width: 58%;
     height: 5%;
-    margin: 10px;
+    margin: 10px; */
+}
+
+div.userOnline_div{
+    width: 100%;
+    height: 10%;
+    border: 1px solid black;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    
+}
+
+div.userOnline_div:hover > div.overlay{
+    width:100%;
+    height:100%;
+    position:absolute;
+    background-color:#000;
+    opacity:0.5;
+    top:0;
+}
+
+div.userOnline_div p {
+    transform: translate(0, 150%);
+}
+
+div.searchResult_div{
+    cursor: pointer;
+    position: relative;
+}
+
+div.searchResult_div:hover > div.overlay2{
+    width:100%;
+    height:100%;
+    position:absolute;
+    background-color:#000;
+    opacity:0.5;
+    top:0;
 }
 
 span.typing-dot {

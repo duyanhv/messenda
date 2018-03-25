@@ -66,18 +66,23 @@ let update = (data, cb) => {
     });
 }
 
-let findByUsername = (data, cb) =>{
-    userModel.findOne({username : data}, (err, res) =>{
-        if(err) console.error(err);
+let findByUsername = (data, cb) => {
+    userModel.find({
+        "username": {
+            "$regex" : data,
+            "$options": "i"
+        }
+    }, (err, res) => {
+        if (err) console.error(err);
         cb(null, res);
     });
 }
 
-let isAuthen = (req, res, next) =>{
-    if(req.session.user){
+let isAuthen = (req, res, next) => {
+    if (req.session.user) {
         return next();
     }
-    res.redirect('/');
+    res.redirect('/login');
 }
 
 

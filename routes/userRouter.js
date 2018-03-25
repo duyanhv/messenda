@@ -12,14 +12,18 @@ const isAuthen = userController.isAuthen;
 const init = (io, app, sessionStore) => {
 
     Router.get('/', (req, res) => {
-        res.redirect('/login');
+        if(typeof req.session !== 'undefined'){
+            res.redirect('/api/chat/');
+        }else{
+            res.redirect('/login');
+        }
     });
 
     Router.get('/login', (req, res) => {
         res.render('login');
     });
-
-    Router.get('/checkSession', (req, res) => res.send(req.session.user.user._id));
+    // .user.user._id
+    Router.get('/checkSession', (req, res) => res.send(req.session));
 
     var userid = "";
     var currentUsername = "";
@@ -54,7 +58,7 @@ const init = (io, app, sessionStore) => {
         });
     });
 
-    Router.get('/logout', (req, res) => {
+    Router.get('/logout', isAuthen, (req, res) => {
         req.session.destroy(() => {
             res.send('destroyed');
         });
@@ -78,7 +82,7 @@ const init = (io, app, sessionStore) => {
         });
     });
 
-    Router.get('/api/chat/', (req, res) => {
+    Router.get('/api/chat/', isAuthen, (req, res) => {
         res.render('index');
         // io.on('connection', (socket) => {
         //     socket.on('chat', (msg) => {
@@ -98,16 +102,16 @@ const init = (io, app, sessionStore) => {
 
     });
 
-    Router.post('/api/chat/', (req, res) => {
+    Router.post('/api/chat/', isAuthen, (req, res) => {
         userController.findByUsername(req.body.search, (err, data) => {
             if (err) console.error(err);
+            
             res.json(data);
         });
     });
+
     var users = {};
-
-
-    Router.get('/api/chat/:id', (req, res) => {
+    Router.get('/api/chat/:id', isAuthen, (req, res) => {
         var conversation = [];
         var sortedConversation = [];
         var searchUserId = '';
@@ -120,7 +124,18 @@ const init = (io, app, sessionStore) => {
         }, (err, dataSender) => {
             if (err) console.error(err);
 
-            for (let i = 0; i < dataSender.messages.length; i++) {
+            // if(typeof dataSender.messages == 'undefined'){
+            //     console.log('NOT FOUND MESSAGE');
+            //     res.render('index', {
+            //         userId: req.params.id,
+            //         conversation: conversation
+            //     });
+
+            //     return;
+            // }
+            var dataSender_messages_length = !(typeof dataSender.messages === 'undefined') ? dataSender.messages.length : 0;
+
+            for (let i = 0; i < dataSender_messages_length; i++) {
                 conversation.push(dataSender.messages[i]);
             }
 
@@ -130,7 +145,8 @@ const init = (io, app, sessionStore) => {
             }, (err, dataReceiver) => {
                 if (err) console.log(err);
 
-                for (let j = 0; j < dataReceiver.messages.length; j++) {
+                var dataReceiver_messages_length = !(typeof dataReceiver.messages === 'undefined') ? dataReceiver.messages.length : 0;
+                for (let j = 0; j < dataReceiver_messages_length; j++) {
                     conversation.push(dataReceiver.messages[j]);
                 }
 
@@ -147,16 +163,17 @@ const init = (io, app, sessionStore) => {
                 // console.log(`dataMessage1: ${util.inspect(dataSender, false, null)}`);
                 // console.log(`dataMessage2: ${util.inspect(dataReceiver, false, null)}`);
 
-
+                console.log(conversation);
                 res.render('index', {
                     userId: req.params.id,
                     conversation: conversation
                 });
+
             });
         });
     });
 
-    Router.post('/api/chat/:id', (req, res) => {
+    Router.post('/api/chat/:id', isAuthen, (req, res) => {
         // conversationController.create({
         //     "sender": req.session.user.user._id,
         //     "receiver": mongoose.Types.ObjectId(req.body.receiver),
@@ -167,12 +184,12 @@ const init = (io, app, sessionStore) => {
         // });
     });
 
-    Router.put('/api/chat/:id', (req, res) => {
+    Router.put('/api/chat/:id', isAuthen, (req, res) => {
 
     });
 
     var clients = {};
-    var users = {};
+    var usersOnline = {};
 
     io.use(function (socket, next) {
         if (socket.request.headers.cookie) {
@@ -200,98 +217,104 @@ const init = (io, app, sessionStore) => {
         else next();
     });
 
-    try {
-        io.on('connection', (socket) => {
-            // console.log('session user:');
-            //lay du lieu user tu session
-            // console.log(socket.request.session);        
+    io.on('connection', (socket) => {
+        // console.log('session user:');
+        //lay du lieu user tu session
+        // console.log(socket.request.session);        
 
-            if (typeof socket.request.session.user.user.username !== 'undefined') {
-                socket.emit('username', socket.request.session.user.user.username);
-            }
+        if (typeof socket.request.session.user.user.username !== 'undefined') {
+            socket.emit('username', socket.request.session.user.user.username);
+        }
 
-            socket.on('url', (data) => {
-                if (data) {
-                    if (typeof socket.request.session.user.user._id !== 'undefined') {
-                        clients[socket.request.session.user.user._id] = socket.id;
-                        
-                        users[socket.request.session.user.user.username] = socket.id;
-                        io.sockets.emit('usersOnline', users);
+        socket.on('url', (data) => {
+            if (data) {
+                if (typeof socket.request.session.user.user._id !== 'undefined') {
+                    clients[socket.request.session.user.user._id] = socket.id;
 
-                    }
+                    usersOnline[socket.request.session.user.user.username] = socket.id;
+                    io.sockets.emit('usersOnline', usersOnline);
 
-                    // console.log(`api/chat: ${socket.id}`);
                 }
-            });
 
+                // console.log(`api/chat: ${socket.id}`);
+            }
+        });
 
-            socket.on('send message', (data) => {
+        // console.log(`clients[users[socket.request.session.user.user._id]]: ${clients[users[socket.request.session.user.user._id]]}`);
+        socket.on('send message', (data) => {
 
-                if (typeof socket.request.session !== 'undefined' &&
-                    typeof users !== 'undefined') {
+            if (typeof socket.request.session !== 'undefined' &&
+                typeof users !== 'undefined') {
+
+                if (!(typeof clients[users[socket.request.session.user.user._id]] === 'undefined')) {
                     io.sockets.connected[clients[users[socket.request.session.user.user._id]]].emit('private chat', {
                         user: socket.request.session.user.user.username,
                         message: data.message,
                         receiver: data.receiver_id,
                         userid: socket.request.session.user.user._id
                     });
-
                     io.sockets.connected[socket.id].emit('private chat', {
                         user: socket.request.session.user.user.username,
                         message: data.message
                     });
-
-                }
-            });
-
-            socket.on('saveMess', (saveMess) => {
-                // console.log(saveMess.userid);
-                // console.log(typeof socket.request.session.user.user._id.toString());
-                // console.log(`saveMess.username: ${saveMess.username}`);
-                // console.log(`socket: ${socket.request.session.user.user.username}`);
-                // (saveMess.username === socket.request.session.user.user.username) && 
-                // console.log(saveMess.userid == socket.request.session.user.user._id.toString());
-                // console.log(socket.request.session.user.user._id);
-                if (typeof saveMess.message != 'undefined') {
-                    console.log(saveMess);
-                    conversationController.writePrivateMessage({
-                        sender: saveMess.userid,
-                        receiver: saveMess.receiver,
-                        messages: {
-                            username: saveMess.username,
-                            message: saveMess.message,
-                            date: new Date()
-                        }
-                    }, (err, res) => {
-                        if (err) throw err;
-                        console.log(res);
+                }else{
+                    io.sockets.connected[socket.id].emit('private chat', {
+                        user: socket.request.session.user.user.username,
+                        message: data.message,
+                        receiver: data.receiver_id,
+                        userid: socket.request.session.user.user._id
                     });
                 }
-            });
-
-            socket.on('typing', (typing) => {
-                if (typeof socket.request.session !== 'undefined' &&
-                    typeof users !== 'undefined') {
-                    io.sockets.connected[clients[users[socket.request.session.user.user._id]]].emit('typing', typing);
-                };
-
-            });
-
-            // socket.on('stoptyping', (typing) =>{
-            //     if (typeof socket.request.session !== 'undefined' &&
-            //     typeof users !== 'undefined') {
-            //         io.sockets.connected[clients[users[socket.request.session.user.user._id]]].emit('stoptyping', typing);
-            //     };
-            // });
-
-            socket.on('disconnect', () => {
-                delete clients[socket.request.session.user.user._id];
-                // delete users[socket.request.session.user.user.username];
-            });
+            }
         });
-    } catch (e) {
-        console.log(e);
-    }
+
+        socket.on('saveMess', (saveMess) => {
+            // console.log(saveMess.userid);
+            // console.log(typeof socket.request.session.user.user._id.toString());
+            // console.log(`saveMess.username: ${saveMess.username}`);
+            // console.log(`socket: ${socket.request.session.user.user.username}`);
+            // (saveMess.username === socket.request.session.user.user.username) && 
+            // console.log(saveMess.userid == socket.request.session.user.user._id.toString());
+            // console.log(socket.request.session.user.user._id);
+            if (typeof saveMess.message != 'undefined') {
+                console.log(saveMess);
+                conversationController.writePrivateMessage({
+                    sender: saveMess.userid,
+                    receiver: saveMess.receiver,
+                    messages: {
+                        username: saveMess.username,
+                        message: saveMess.message,
+                        date: new Date()
+                    }
+                }, (err, res) => {
+                    if (err) throw err;
+                    console.log(res);
+                });
+            }
+        });
+
+        socket.on('typing', (typing) => {
+            if (typeof socket.request.session !== 'undefined' &&
+                typeof users !== 'undefined' && typeof clients[users[socket.request.session.user.user._id]] !== 'undefined') {
+                io.sockets.connected[clients[users[socket.request.session.user.user._id]]].emit('typing', typing);
+            };
+
+        });
+
+        // socket.on('stoptyping', (typing) =>{
+        //     if (typeof socket.request.session !== 'undefined' &&
+        //     typeof users !== 'undefined') {
+        //         io.sockets.connected[clients[users[socket.request.session.user.user._id]]].emit('stoptyping', typing);
+        //     };
+        // });
+
+        socket.on('disconnect', () => {
+            delete clients[socket.request.session.user.user._id];
+            delete usersOnline[socket.request.session.user.user.username];
+            io.sockets.emit('usersOnline', usersOnline);
+        });
+    });
+
 
 
     return Router;

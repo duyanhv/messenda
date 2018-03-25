@@ -25,13 +25,13 @@
     </div>
     <div class="chat_div">
 
-
+  <div id="output">
       {{#each conversation}}
-      <div id="output">
-        <p>
-          <strong>{{username}}: </strong> {{message}} </p>
-      </div>
+      
+        <p> <strong>{{username}}: </strong> {{message}} </p>
+      
       {{/each}}
+      </div>
       <div id="feedback"></div>
       <input id="user" type="text" placeholder="user">
       <input id="message" type="text" placeholder="message"> {{!--
@@ -43,16 +43,18 @@
   </div>
 
 
+
   <script src="/lib/jquery.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/script.js"></script>
   <script src="/lib/handlebars.js"></script>
+  <script src="/js/script.js"></script>
   <script id="usersonline-template" type="text/x-handlebars-template" src="/lib/handlebars.js">
-      <ul>
-        {{#each apiUsersOnline}}
-          <li>{{this}}</li>
-        {{/each}}
-      </ul>
+        \{{#each apiUserOnline}}      
+            <div class="userOnline_div">
+              <p>\{{username}}</p>
+              <div class="overlay"></div>
+            </div>
+        \{{/each}}
   </script>
 </body>
 

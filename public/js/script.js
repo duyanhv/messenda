@@ -1,7 +1,7 @@
 var socket = io();
 
 socket.on('connect', function () {
-    console.log('check 1', socket.connected);
+
 });
 
 $('#message').on('keypress', (e) => {
@@ -49,7 +49,7 @@ socket.on('username', (data) => {
 socket.on('private chat', (msg) => {
     feedback.innerHTML = '';
     output.innerHTML += '<p><strong>' + msg.user + ': </strong>' + msg.message + '</p>';
-    console.log(`msg.user: ${msg.user} || msg.mess: ${msg.message}`);
+    // console.log(`msg.user: ${msg.user} || msg.mess: ${msg.message}`);
 
     socket.emit('saveMess', {
         username: msg.user,
@@ -73,19 +73,26 @@ socket.on('stoptyping', (data) => {
     }
 });
 
-var userOnline = [];
-socket.on('usersOnline', (data) =>{
-    if(data){
-        $(() =>{
-            var source = $('#usersonline-template').html();
-            var template = Handlebars.compile(source);
-            var html = template({
-                apiUsersOnline: Object.keys(data)
-            });
-            console.log(Object.keys(data));
-            $('#userOnline').html(html);
-        });
-    }
+var userOnline = {};
+var clients = [];
+socket.on('usersOnline', (data) => {
+    var newData = Object.keys(data).map(key => ({ username: key }));
+    // for(let i = 0; i < newData.length; i++){
+    //     if(typeof newData[i] === "string"){
+    //         userOnline[i] = newData[i]
+    //     }
+    // }
+
+
+
+    var source = $('#usersonline-template').html();
+    var template = Handlebars.compile(source);
+    var html = template({
+        apiUserOnline: newData
+    });
+
+    $('#userOnline').html(html);
+
 });
 
 $('#buttonCheckSession').on('click', (e) => {
@@ -96,11 +103,12 @@ $('#buttonCheckSession').on('click', (e) => {
 var currentUserId;
 
 
-var searchUserId;
+var searchUserId = {};
 
 $('#search').on('keyup', (e) => {
     e.preventDefault();
-
+    $('#search_div').css("display", "none");
+    $('#search_div').html('');
     let searchInput = $('input[ name = search ]').val();
 
     $.ajax({
@@ -110,15 +118,21 @@ $('#search').on('keyup', (e) => {
             search: searchInput
         }
     }).done((result) => {
-
         if (result) {
-            $('#search_div').css("display", "block");
-            $('#setUsername').text(result.username);
-            searchUserId = result._id;
+            for (let i = 0; i < result.length; i++) {
+                $('#search_div').append('<div class="searchResult_div">' + result[i].username + '<div class="overlay2"></div>'+ '</div>');
+                $('#search_div').css("display", "block");
+                searchUserId[result[i].username] = result[i]._id;
+                console.log(result[i].username);
+            }
         } else {
+            $('#search_div').html('');
             $('#search_div').css("display", "none");
         }
-
+        if($('#search').val() === ''){
+            $('#search_div').html('');
+            $('#search_div').css("display", "none");
+        }
 
     });
 });
