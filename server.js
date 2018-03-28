@@ -45,7 +45,7 @@ mongoose.connect(config.connectionString || process.env.MONGODB_URI, (err) => {
     }
 });
 
-http.listen(config.port || process.env.PORT, (err) => {
+http.listen(process.env.PORT || config.port, (err) => {
     if (err) {
         console.log("err http")
         console.log(err);
