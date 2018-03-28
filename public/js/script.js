@@ -82,9 +82,6 @@ socket.on('usersOnline', (data) => {
     //         userOnline[i] = newData[i]
     //     }
     // }
-
-
-
     var source = $('#usersonline-template').html();
     var template = Handlebars.compile(source);
     var html = template({
@@ -97,6 +94,37 @@ socket.on('usersOnline', (data) => {
 
 $('#buttonCheckSession').on('click', (e) => {
     $.get('/checkSession').then(data => console.log(data));
+});
+
+function removeA(arr) {
+    var what, a = arguments, L = a.length, ax;
+    while (L > 1 && arr.length) {
+        what = a[--L];
+        while ((ax= arr.indexOf(what)) !== -1) {
+            arr.splice(ax, 1);
+        }
+    }
+    return arr;
+}
+
+var loadConversations =[];
+socket.on('loadConversations', (data) =>{
+    
+    for(let i = 0; i < loadConversations.length; i++){
+        if(loadConversations[i].userReceive == data.userReceive){
+            removeA(loadConversations, loadConversations[i]);
+        }
+    }
+    loadConversations.push(data);
+    var newLoadConversations = loadConversations.map(key => ({ userReceive: key }));
+    console.log(loadConversations)
+    var source1 = $('#loadconversations-template').html();
+    var template1 = Handlebars.compile(source1);
+    var html1 = template1({
+        apiLoadConversations: newLoadConversations
+    });
+
+    $('#conversation').html(html1);
 });
 
 
@@ -120,16 +148,16 @@ $('#search').on('keyup', (e) => {
     }).done((result) => {
         if (result) {
             for (let i = 0; i < result.length; i++) {
-                $('#search_div').append('<div class="searchResult_div">' + result[i].username + '<div class="overlay2"></div>'+ '</div>');
+                $('#search_div').append('<div class="searchResult_div" id="' + result[i]._id + '"' + 'onClick= "onClickSearchResult(this.id)"' + '>' + result[i].username + '<div class="overlay2"></div>' + '</div>');
                 $('#search_div').css("display", "block");
                 searchUserId[result[i].username] = result[i]._id;
-                console.log(result[i].username);
+                console.log(searchUserId);
             }
         } else {
             $('#search_div').html('');
             $('#search_div').css("display", "none");
         }
-        if($('#search').val() === ''){
+        if ($('#search').val() === '') {
             $('#search_div').html('');
             $('#search_div').css("display", "none");
         }
@@ -151,15 +179,20 @@ $('#search').on('keyup', (e) => {
 //     }
 
 
-$('#search_div').on('click', (e) => {
-    if (typeof searchUserId !== 'undefined') {
-        window.location.replace(`/api/chat/${searchUserId}`);
-    }
-});
+// $('#search_div').on('click', (e) => {
+//     if (typeof searchUserId !== 'undefined') {
+
+//     }
+// });
 
 let checkChatApi = (url) => {
     var testUrl = '/api/chat';
     socket.emit('url', url.indexOf(testUrl) >= 0);
+}
+
+let onClickSearchResult = (clicked_id) => {
+    // console.log(clicked_id);
+    window.location.replace(`/api/chat/${clicked_id}`);
 }
 
 $(document).ready(() => {

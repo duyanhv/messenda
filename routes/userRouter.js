@@ -83,23 +83,9 @@ const init = (io, app, sessionStore) => {
     });
 
     Router.get('/api/chat/', isAuthen, (req, res) => {
+        
+        
         res.render('index');
-        // io.on('connection', (socket) => {
-        //     socket.on('chat', (msg) => {
-        //         io.emit('chat', msg);
-        //         console.log(msg);
-        //     });
-        //     // console.log(socket.id);
-
-        //     // socket.on('typing', (typing) =>{
-        //     //     socket.broadcast.emit('typing', typing);
-        //     // });
-        //     //     socket.join('5a7f9fd7e78b490926a13cd5/5a7fa399baea0b09e85fd3ae');
-        //     //     socket.on('chat', (msg) =>{
-        //     //         socket.boardcast.to('5a7f9fd7e78b490926a13cd5/5a7fa399baea0b09e85fd3ae').emit('chat', msg);
-        //     //     })
-        // });
-
     });
 
     Router.post('/api/chat/', isAuthen, (req, res) => {
@@ -190,6 +176,7 @@ const init = (io, app, sessionStore) => {
 
     var clients = {};
     var usersOnline = {};
+    var usernameid = {};
 
     io.use(function (socket, next) {
         if (socket.request.headers.cookie) {
@@ -220,11 +207,45 @@ const init = (io, app, sessionStore) => {
     io.on('connection', (socket) => {
         // console.log('session user:');
         //lay du lieu user tu session
-        // console.log(socket.request.session);        
+        // console.log(socket.request.session.user.user);        
 
         if (typeof socket.request.session.user.user.username !== 'undefined') {
             socket.emit('username', socket.request.session.user.user.username);
         }
+
+        userController.getAll((err, res) =>{
+            if(err) console.error(err);
+            if(!res){
+                return;
+            }
+            for(let i = 0; i < res.length; i++){
+                usernameid[res[i]._id] = res[i].username;
+            }
+            
+            
+        });
+
+
+        conversationController.loadConversations(socket.request.session.user.user._id, (err, res) =>{
+            if(err) console.error(err);
+
+            if(socket.request.session.user.user.username == res.username){
+                if(typeof usernameid !== 'undefined'){
+                    
+                    socket.emit('loadConversations',{
+                        lastUserChat: 'You',
+                        userReceive: usernameid[res.receiverId],
+                        message: res.mess
+                    });
+                    return;
+                }
+
+            }
+            socket.emit('loadConversations',{
+                userReceive: usernameid[res.receiverId],
+                message: res.mess
+            });
+        });
 
         socket.on('url', (data) => {
             if (data) {
@@ -240,7 +261,10 @@ const init = (io, app, sessionStore) => {
             }
         });
 
-        // console.log(`clients[users[socket.request.session.user.user._id]]: ${clients[users[socket.request.session.user.user._id]]}`);
+        
+        
+
+        
         socket.on('send message', (data) => {
 
             if (typeof socket.request.session !== 'undefined' &&
@@ -288,8 +312,27 @@ const init = (io, app, sessionStore) => {
                     }
                 }, (err, res) => {
                     if (err) throw err;
-                    console.log(res);
+                    // console.log(res);
+                    conversationController.loadConversations(socket.request.session.user.user._id, (err, resLoadConversations) =>{
+                        if(err) console.error(err);
+                
+                        if(socket.request.session.user.user.username == resLoadConversations.username){
+                            socket.emit('loadConversations',{
+                                lsatUserChat: 'You',
+                                userReceive: usernameid[resLoadConversations.receiverId],
+                                message: resLoadConversations.mess
+                            });
+                            return;
+                        }
+                        socket.emit('loadConversations',{
+                            userReceive: usernameid[resLoadConversations.receiverId],
+                            message: resLoadConversations.mess
+                        });
+                        
+                    });
                 });
+
+                
             }
         });
 

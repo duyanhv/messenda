@@ -14,23 +14,32 @@
 
     </div>
 
-    <button class="btn btn-success" id="buttonCheckSession">Check</button>
-    <input id="search" type="text" placeholder="search" name="search">
-    <div id="search_div" class="search_div">
-      <p id="setUsername"></p>
+    <div id="conversation" class="conversation">
+
     </div>
+
+    {{!--
+    <button class="btn btn-success" id="buttonCheckSession">Check</button> --}}
+    <div class="contain_inputSearch">
+      <input id="search" type="text" placeholder="search" name="search">
+      <div id="search_div" class="search_div">
+
+      </div>
+    </div>
+
     <div id="receiver_div" class="receiver_div">
       <p id="receiver_id">{{userId}}</p>
 
     </div>
     <div class="chat_div">
 
-  <div id="output">
-      {{#each conversation}}
-      
-        <p> <strong>{{username}}: </strong> {{message}} </p>
-      
-      {{/each}}
+      <div id="output">
+        {{#each conversation}}
+
+        <p>
+          <strong>{{username}}: </strong> {{message}} </p>
+
+        {{/each}}
       </div>
       <div id="feedback"></div>
       <input id="user" type="text" placeholder="user">
@@ -55,6 +64,13 @@
               <div class="overlay"></div>
             </div>
         \{{/each}}
+  </script>
+
+  <script id="loadconversations-template" type="text/x-handlebars-template" src="/lib/handlebars.js">
+        \{{#each apiLoadConversations}}      
+              <p>\{{userReceiver}}</p>
+        \{{/each}}
+        
   </script>
 </body>
 

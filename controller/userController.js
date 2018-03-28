@@ -50,6 +50,37 @@ let getById = (id, cb) => {
     }
 }
 
+let getByIdToAddMess = (data, cb) => {
+
+    if (data.id.match(/^[0-9a-fA-F]{24}$/)) {
+        userModel.findOne({
+            "_id": data.id,
+            "Conversations": data.conversationid
+        }, (err, res) => {
+            if (err) console.error(err);
+            if (res) {
+                cb(null, res);
+            } else {
+                userModel.findOne({
+                    "_id": data.id,
+                }, (err, elseRes) => {
+                    if(err) console.error(err);
+                    if(!elseRes){
+                        cb(null, 'elseRes khong co user');
+                        return;
+                    }
+                    cb(null, {
+                        res: elseRes,
+                        conversationsNotFound: 'CONVERSATION NOT FOUND'
+                    });
+                });
+            }
+        });
+    } else {
+        cb(null, '404 not found');
+    }
+}
+
 let update = (data, cb) => {
     userModel.findById(data._id, (err, res) => {
         if (err) cb(err);
@@ -69,7 +100,7 @@ let update = (data, cb) => {
 let findByUsername = (data, cb) => {
     userModel.find({
         "username": {
-            "$regex" : data,
+            "$regex": data,
             "$options": "i"
         }
     }, (err, res) => {
@@ -92,5 +123,6 @@ module.exports = {
     getAll,
     getById,
     isAuthen,
-    findByUsername
+    findByUsername,
+    getByIdToAddMess
 }
