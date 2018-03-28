@@ -36,16 +36,18 @@ app.use(express.static('public'));
 app.get('/*', (req, res) =>{
     res.render('404notfound');
 });
-mongoose.connect(config.connectionString, (err) => {
+mongoose.connect(config.connectionString || process.env.MONGODB_URI, (err) => {
     if (err) {
+        console.log("err mongoose")
         console.log(err);
     } else {
         console.log("Connect Successfully");
     }
 });
 
-http.listen(config.port, (err) => {
+http.listen(config.port || process.env.PORT, (err) => {
     if (err) {
+        console.log("err http")
         console.log(err);
     } else {
         console.log(`Connected on port ${config.port}`);
