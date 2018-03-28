@@ -51,6 +51,9 @@ let getById = (id, cb) => {
 }
 
 let getByIdToAddMess = (data, cb) => {
+    if(typeof data.id == 'undefined'){
+        return;
+    }
 
     if (data.id.match(/^[0-9a-fA-F]{24}$/)) {
         userModel.findOne({
