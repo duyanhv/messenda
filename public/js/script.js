@@ -96,36 +96,36 @@ $('#buttonCheckSession').on('click', (e) => {
     $.get('/checkSession').then(data => console.log(data));
 });
 
-function removeA(arr) {
-    var what, a = arguments, L = a.length, ax;
-    while (L > 1 && arr.length) {
-        what = a[--L];
-        while ((ax= arr.indexOf(what)) !== -1) {
-            arr.splice(ax, 1);
-        }
-    }
-    return arr;
-}
+// function removeA(arr) {
+//     var what, a = arguments, L = a.length, ax;
+//     while (L > 1 && arr.length) {
+//         what = a[--L];
+//         while ((ax= arr.indexOf(what)) !== -1) {
+//             arr.splice(ax, 1);
+//         }
+//     }
+//     return arr;
+// }
 
-var loadConversations =[];
-socket.on('loadConversations', (data) =>{
+// var loadConversations =[];
+// socket.on('loadConversations', (data) =>{
     
-    for(let i = 0; i < loadConversations.length; i++){
-        if(loadConversations[i].userReceive == data.userReceive){
-            removeA(loadConversations, loadConversations[i]);
-        }
-    }
-    loadConversations.push(data);
-    var newLoadConversations = loadConversations.map(key => ({ userReceive: key }));
-    console.log(loadConversations)
-    var source1 = $('#loadconversations-template').html();
-    var template1 = Handlebars.compile(source1);
-    var html1 = template1({
-        apiLoadConversations: newLoadConversations
-    });
+//     for(let i = 0; i < loadConversations.length; i++){
+//         if(loadConversations[i].userReceive == data.userReceive){
+//             removeA(loadConversations, loadConversations[i]);
+//         }
+//     }
+//     loadConversations.push(data);
+//     var newLoadConversations = loadConversations.map(key => ({ userReceive: key }));
+//     console.log(loadConversations)
+//     var source1 = $('#loadconversations-template').html();
+//     var template1 = Handlebars.compile(source1);
+//     var html1 = template1({
+//         apiLoadConversations: newLoadConversations
+//     });
 
-    $('#conversation').html(html1);
-});
+//     $('#conversation').html(html1);
+// });
 
 
 var currentUserId;

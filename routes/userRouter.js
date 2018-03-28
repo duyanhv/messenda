@@ -213,39 +213,39 @@ const init = (io, app, sessionStore) => {
             socket.emit('username', socket.request.session.user.user.username);
         }
 
-        userController.getAll((err, res) =>{
-            if(err) console.error(err);
-            if(!res){
-                return;
-            }
-            for(let i = 0; i < res.length; i++){
-                usernameid[res[i]._id] = res[i].username;
-            }
+        // userController.getAll((err, res) =>{
+        //     if(err) console.error(err);
+        //     if(!res){
+        //         return;
+        //     }
+        //     for(let i = 0; i < res.length; i++){
+        //         usernameid[res[i]._id] = res[i].username;
+        //     }
             
             
-        });
+        // });
 
 
-        conversationController.loadConversations(socket.request.session.user.user._id, (err, res) =>{
-            if(err) console.error(err);
+        // conversationController.loadConversations(socket.request.session.user.user._id, (err, res) =>{
+        //     if(err) console.error(err);
 
-            if(socket.request.session.user.user.username == res.username){
-                if(typeof usernameid !== 'undefined'){
+        //     if(socket.request.session.user.user.username == res.username){
+        //         if(typeof usernameid !== 'undefined'){
                     
-                    socket.emit('loadConversations',{
-                        lastUserChat: 'You',
-                        userReceive: usernameid[res.receiverId],
-                        message: res.mess
-                    });
-                    return;
-                }
+        //             socket.emit('loadConversations',{
+        //                 lastUserChat: 'You',
+        //                 userReceive: usernameid[res.receiverId],
+        //                 message: res.mess
+        //             });
+        //             return;
+        //         }
 
-            }
-            socket.emit('loadConversations',{
-                userReceive: usernameid[res.receiverId],
-                message: res.mess
-            });
-        });
+        //     }
+        //     socket.emit('loadConversations',{
+        //         userReceive: usernameid[res.receiverId],
+        //         message: res.mess
+        //     });
+        // });
 
         socket.on('url', (data) => {
             if (data) {
@@ -313,23 +313,23 @@ const init = (io, app, sessionStore) => {
                 }, (err, res) => {
                     if (err) throw err;
                     // console.log(res);
-                    conversationController.loadConversations(socket.request.session.user.user._id, (err, resLoadConversations) =>{
-                        if(err) console.error(err);
+                    // conversationController.loadConversations(socket.request.session.user.user._id, (err, resLoadConversations) =>{
+                    //     if(err) console.error(err);
                 
-                        if(socket.request.session.user.user.username == resLoadConversations.username){
-                            socket.emit('loadConversations',{
-                                lsatUserChat: 'You',
-                                userReceive: usernameid[resLoadConversations.receiverId],
-                                message: resLoadConversations.mess
-                            });
-                            return;
-                        }
-                        socket.emit('loadConversations',{
-                            userReceive: usernameid[resLoadConversations.receiverId],
-                            message: resLoadConversations.mess
-                        });
+                    //     if(socket.request.session.user.user.username == resLoadConversations.username){
+                    //         socket.emit('loadConversations',{
+                    //             lsatUserChat: 'You',
+                    //             userReceive: usernameid[resLoadConversations.receiverId],
+                    //             message: resLoadConversations.mess
+                    //         });
+                    //         return;
+                    //     }
+                    //     socket.emit('loadConversations',{
+                    //         userReceive: usernameid[resLoadConversations.receiverId],
+                    //         message: resLoadConversations.mess
+                    //     });
                         
-                    });
+                    // });
                 });
 
                 
